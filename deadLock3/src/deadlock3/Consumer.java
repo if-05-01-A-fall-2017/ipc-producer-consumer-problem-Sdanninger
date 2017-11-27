@@ -18,20 +18,25 @@ import deadlock3.Controller;
 public class Consumer extends Thread {
   @Override
     public void run(){
+        Boolean sleep = false,wakeup = false;
         while (true) {
             //System.out.println("Cons:Ich bin wach");
             
             synchronized(Controller.class){             
                 if (getCount() <= 0) {
+                    sleep = true;
                     //System.out.println("Cons:Ich gehe schlafen");
-                    try {
-                        synchronized(this){ wait(); }
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(Consumer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }                
+                }
             };
             
+            if(sleep){
+                try {
+                    synchronized(this){ wait(); }
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Consumer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            sleep = false;
 
             synchronized(Controller.class){             
                 Controller.remove();         
@@ -39,16 +44,15 @@ public class Consumer extends Thread {
             
             synchronized(Controller.class){             
                 if (getCount() >= N-1) {
-                    synchronized(prodThread){ prodThread.notify();}
-                }          
+                    wakeup = true;
+                }
             };
-            
+            if(wakeup)
+                synchronized(prodThread){ prodThread.notify();}
+            wakeup = false;
             
             
 
         }
     }
     
-    
-    
-}
