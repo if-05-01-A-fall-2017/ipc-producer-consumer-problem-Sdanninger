@@ -16,6 +16,7 @@ import static deadlock3.Controller.*;
 public class Producer extends Thread{
     @Override
     public void run(){
+        Boolean sleep = false,wakeup = false;
         while (true) {
             //System.out.println("Prod:ich bin wach");
             //item = produce();
@@ -23,26 +24,34 @@ public class Producer extends Thread{
             synchronized(Controller.class){             
                 if (getCount() >= N) {
                     //System.out.println("Prod:Ich gehe schlafen");
-                    try {
-                        synchronized(this){ wait(); }
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(Producer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    sleep = true;
                 }      
             };
             
-            
+            if(sleep){
+                try {
+                    synchronized(this){ wait(); }
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Producer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            sleep = false;
             synchronized(Controller.class){             
                 insert_item();        
             };
 
             synchronized(Controller.class){             
                 if (getCount() >= 1) {
-                    synchronized(consThread){ consThread.notify();}
+                    wakeup = true;
+                    
                 }       
             };
             
-
+            if(wakeup)
+                synchronized(consThread){ consThread.notify();}
+            
+            wakeup = true;
         }
     }
+}
 }
